@@ -33,9 +33,12 @@ public class VaultCLI {
                     handleDelete();
                     break;
                 case "4":
-                    handleList();
+                    handleUpdate();
                     break;
                 case "5":
+                    handleList();
+                    break;
+                case "6":
                     System.out.println("Goodbye! Stay safe.");
                     return; // Exits the method (and the loop)
                 default:
@@ -48,9 +51,10 @@ public class VaultCLI {
         System.out.println("\n=== 🔐 PassKey Vault ===");
         System.out.println("1. Save Password");
         System.out.println("2. Retrieve Password");
-        System.out.println("3. Delete Password");
-        System.out.println("4. List All Sites");
-        System.out.println("5. Exit");
+        System.out.println("3. Delete Account");
+        System.out.println("4. Update Password");
+        System.out.println("5. List All Sites");
+        System.out.println("6. Exit");
         System.out.print("Select an option: ");
     }
 
@@ -137,7 +141,28 @@ public class VaultCLI {
             String siteQuery = scanner.nextLine();
             System.out.print("Enter username: ");
             String usernameQuery = scanner.nextLine();
-            db.deleteUsername(siteQuery, usernameQuery);
+            System.out.print("Are you sure? (y/n): ");
+            if (scanner.nextLine().equalsIgnoreCase("y")) {
+                db.deleteUsername(siteQuery, usernameQuery);
+            } else {
+                System.out.println("Deletion cancelled.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error deleting: " + e.getMessage());
+        }
+    }
+
+    private void handleUpdate() {
+        try {
+            handleList();
+            System.out.print("Enter site name: ");
+            String siteQuery = scanner.nextLine();
+            System.out.print("Enter username: ");
+            String usernameQuery = scanner.nextLine();
+            System.out.print("Enter new password: ");
+            String rawPass = scanner.nextLine();
+            String encryptedPass = sec.encrypt(rawPass);
+            db.updateUsername(siteQuery, usernameQuery, encryptedPass);
         } catch (Exception e) {
             System.out.println("Error deleting: " + e.getMessage());
         }

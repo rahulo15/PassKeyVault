@@ -105,6 +105,28 @@ public class Database {
         }
     }
 
+    public void updateUsername(String siteQuery, String username, String newPassword) {
+        String sql = "UPDATE vault SET password = ? WHERE site = ? AND username = ?";
+
+        // try-with-resources: automatically closes the statement when done
+        try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(sql)) {
+            stmt.setString(1, newPassword);
+            stmt.setString(2, siteQuery);
+            stmt.setString(3, username);
+
+            int rowsAffected = stmt.executeUpdate(); // Execute the save
+
+            if (rowsAffected > 0) {
+                System.out.println("Password updated successfully.");
+            } else {
+                System.out.println("❌ No account found with such creds.");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error updating password: " + e.getMessage());
+        }
+    }
+
     public List<Account> loadAccounts(String siteQuery) {
         List<Account> accounts = new ArrayList<>();
         String sql = "Select * from vault";
@@ -159,7 +181,7 @@ public class Database {
             stmt.setString(1, siteQuery);
             ResultSet rs = stmt.executeQuery();
 
-            if (rs.next() && rs.getInt(1) != 1) {
+            if (rs.next() && rs.getInt(1) > 1) {
                 System.out.println("Redirecting to fetchByUserName(too many acc for this site)...");
                 System.out.println("Choose from below accounts...");
                 loadAccounts(siteQuery);
