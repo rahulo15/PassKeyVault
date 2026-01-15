@@ -84,6 +84,27 @@ public class Database {
         }
     }
 
+    public void deleteUsername(String siteQuery, String username) {
+        String sql = "DELETE FROM vault WHERE site = ? AND username = ?";
+
+        // try-with-resources: automatically closes the statement when done
+        try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(sql)) {
+            stmt.setString(1, siteQuery);
+            stmt.setString(2, username);
+
+            int rowsAffected = stmt.executeUpdate(); // Execute the save
+
+            if (rowsAffected > 0) {
+                System.out.println("Account deleted successfully.");
+            } else {
+                System.out.println("❌ No account found to delete.");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error deleting account: " + e.getMessage());
+        }
+    }
+
     public List<Account> loadAccounts(String siteQuery) {
         List<Account> accounts = new ArrayList<>();
         String sql = "Select * from vault";

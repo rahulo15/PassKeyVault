@@ -30,7 +30,7 @@ public class VaultCLI {
                     handleRetrieve();
                     break;
                 case "3":
-//                    handleDelete();
+                    handleDelete();
                     break;
                 case "4":
                     handleList();
@@ -127,6 +127,19 @@ public class VaultCLI {
 
         } catch (Exception e) {
             System.out.println("Error retrieving: " + e.getMessage());
+        }
+    }
+
+    private void handleDelete() {
+        try {
+            handleList();
+            System.out.print("Enter site name: ");
+            String siteQuery = scanner.nextLine();
+            System.out.print("Enter username: ");
+            String usernameQuery = scanner.nextLine();
+            db.deleteUsername(siteQuery, usernameQuery);
+        } catch (Exception e) {
+            System.out.println("Error deleting: " + e.getMessage());
         }
     }
 
