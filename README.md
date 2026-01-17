@@ -1,28 +1,35 @@
 # 🔐 PassKey Vault
 
-A simple, offline password manager built with Java. It saves your passwords securely in a local database file, so you don't need to trust the cloud.
+A secure, offline password manager built with Java. It saves your passwords locally in an encrypted database and can now be controlled remotely via a private Telegram Bot.
 
 ## Features
-* **Secure:** Passwords are encrypted (AES) before being saved.
-* **Private:** Data is stored locally on your computer in `passkey.db`.
-* **Full Control:** You can Save, Retrieve, Update, and Delete your passwords.
-* **Easy Copy:** Automatically copies your password to the clipboard when you retrieve it.
+* **Secure Storage:** Passwords are encrypted (AES) and stored locally in `passkey.db`.
+* **Remote Access:** Manage your vault from your phone using a Telegram Bot, so you don't need to be at your computer.
+* **Strict Security:** The bot includes a "Bouncer" feature that blocks any user ID except yours.
+* **Auto-Destruct:** For privacy, all command messages and bot responses automatically delete themselves after **15 seconds** to keep your chat history clean.
 
 ## How to Run
-1.  Open the project in your IDE (IntelliJ, Eclipse, or VS Code).
-2.  Locate `src/main/java/com/passkey/App.java`.
-3.  Click the **Run** button (green play icon).
-4.  Follow the menu options in the console.
+1.  **Configure:** Add your `BOT_TOKEN` and `OWNER_ID` to the application settings.
+2.  **Build:** Open the project in your IDE (IntelliJ, Eclipse, or VS Code).
+3.  **Run:** Locate `src/main/java/com/passkey/App.java` and click **Run**.
+4.  **Connect:** Open your Telegram bot and start sending commands.
 
-## Usage
-The app now supports full account management:
+## Usage (Telegram Commands)
+You can manage your vault using these text commands.
+*Note: All inputs and outputs self-destruct after 15 seconds.*
 
-* **1. Save:** Add a new website, username, and password.
-* **2. Retrieve:** Search for a website. The password is decrypted and copied to your clipboard.
-* **3. List:** View all your saved accounts (passwords remain hidden).
-* **4. Update:** Change the password for an existing site.
-* **5. Delete:** Permanently remove an account from the vault.
+* `/save <account> <username> <pass>`
+    * *Example: `/save facebook.com myemail@gmail.com secret123`*
+* `/get <account> <username>`
+    * *Example: `/get facebook.com myemail@gmail.com`*
+* `/update <account> <username> <pass>`
+    * *Updates the password for an existing account.*
+* `/delete <account> <username>`
+    * *Permanently removes the account.*
+* `/list`
+    * *Shows all stored sites.*
 
 ## Requirements
 * Java 17 or higher
 * Maven
+* A Telegram Bot Token (from @BotFather)
