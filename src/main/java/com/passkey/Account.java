@@ -1,4 +1,5 @@
 package com.passkey;
+
 import java.util.UUID;
 
 public class Account {
@@ -9,7 +10,7 @@ public class Account {
 
     // Constructor
     public Account(String site, String username, String password) {
-        this.id =  UUID.randomUUID().toString();
+        this.id = UUID.randomUUID().toString();
         this.site = site;
         this.username = username;
         this.password = password;
@@ -24,10 +25,21 @@ public class Account {
     }
 
     // Getters (We use these to read the values safely)
-    public String getId() { return id; }
-    public String getSite() { return site; }
-    public String getUsername() { return username; }
-    public String getPassword() { return password; }
+    public String getId() {
+        return id;
+    }
+
+    public String getSite() {
+        return site;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
 
     // Good practice: Override toString() so we can print the object easily
     @Override

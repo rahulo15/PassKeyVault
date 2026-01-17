@@ -3,11 +3,13 @@ package com.passkey;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class Database {
     // This is the file path. "jdbc:sqlite:" tells Java which driver to use.
-    private static final String URL = "jdbc:sqlite:passkey.db";
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final String URL = dotenv.get("DB_URL");
     private Connection connection;
 
     // Constructor: Opens the connection when you do 'new Database()'
@@ -59,9 +61,8 @@ public class Database {
         return this.connection;
     }
 
-    public void saveAccount(Account account) {
+    public Result saveAccount(Account account) {
         String sql = "INSERT INTO vault(id, site, username, password) VALUES(?, ?, ?, ?)";
-
         // try-with-resources: automatically closes the statement when done
         try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(sql)) {
 
@@ -71,20 +72,29 @@ public class Database {
             stmt.setString(3, account.getUsername());
             stmt.setString(4, account.getPassword());
 
-            stmt.executeUpdate(); // Execute the save
-            System.out.println("Saved account for: " + account.getSite());
+            int rowsAffected = stmt.executeUpdate(); // Execute the save
+            String msg = "";
+            if (rowsAffected > 0) {
+                msg = "Saved account for: " + account.getSite() + " and " + account.getUsername();
+            } else {
+                msg = "Error saving account for: " + account.getSite() + " and " + account.getUsername();
+            }
+            System.out.println(msg);
+            return new Result(rowsAffected, rowsAffected > 0, msg, null);
 
         } catch (SQLException e) {
+            String errorMsg = "";
             if (e.getMessage().contains("UNIQUE constraint failed")) {
-                System.out.println("Error: An account for " + account.getSite() +
-                        " with username " + account.getUsername() + " already exists.");
+                errorMsg = "Error: An account for " + account.getSite() + " with username " + account.getUsername() + " already exists.";
             } else {
-                System.out.println("Database Error: " + e.getMessage());
+                errorMsg = "Database Error: " + e.getMessage();
             }
+            System.out.println(errorMsg);
+            return new Result(0, false, errorMsg, null);
         }
     }
 
-    public void deleteUsername(String siteQuery, String username) {
+    public Result deleteUsername(String siteQuery, String username) {
         String sql = "DELETE FROM vault WHERE site = ? AND username = ?";
 
         // try-with-resources: automatically closes the statement when done
@@ -92,20 +102,29 @@ public class Database {
             stmt.setString(1, siteQuery);
             stmt.setString(2, username);
 
-            int rowsAffected = stmt.executeUpdate(); // Execute the save
+            int rowsAffected = stmt.executeUpdate(); // Execute the delete
+            String msg = "";
 
+            // Check if we actually found something to delete
             if (rowsAffected > 0) {
-                System.out.println("Account deleted successfully.");
+                msg = "Account deleted successfully for: " + siteQuery + " with username: " + username;
+                ;
             } else {
-                System.out.println("❌ No account found to delete.");
+                // rowsAffected is 0, meaning the query ran fine but found nothing matching that site/user
+                msg = "❌ No account found to delete for: " + siteQuery + " with username: " + username;
             }
 
+            System.out.println(msg);
+            return new Result(rowsAffected, rowsAffected > 0, msg, null);
+
         } catch (SQLException e) {
-            System.out.println("Error deleting account: " + e.getMessage());
+            String errorMsg = "Error deleting account: " + e.getMessage();
+            System.out.println(errorMsg);
+            return new Result(0, false, errorMsg, null);
         }
     }
 
-    public void updateUsername(String siteQuery, String username, String newPassword) {
+    public Result updateUsername(String siteQuery, String username, String newPassword) {
         String sql = "UPDATE vault SET password = ? WHERE site = ? AND username = ?";
 
         // try-with-resources: automatically closes the statement when done
@@ -114,26 +133,34 @@ public class Database {
             stmt.setString(2, siteQuery);
             stmt.setString(3, username);
 
-            int rowsAffected = stmt.executeUpdate(); // Execute the save
+            int rowsAffected = stmt.executeUpdate(); // Execute the update
+            String msg = "";
 
+            // Check if we actually found a row to update
             if (rowsAffected > 0) {
-                System.out.println("Password updated successfully.");
+                msg = "Password updated successfully for: " + siteQuery;
             } else {
-                System.out.println("❌ No account found with such creds.");
+                // Logic failure: The SQL ran, but no matching site/username was found
+                msg = "❌ No account found with those credentials for: " + siteQuery;
             }
 
+            System.out.println(msg);
+            return new Result(rowsAffected, rowsAffected > 0, msg, null);
+
         } catch (SQLException e) {
-            System.out.println("Error updating password: " + e.getMessage());
+            String errorMsg = "Error updating password: " + e.getMessage();
+            System.out.println(errorMsg);
+            return new Result(0, false, errorMsg, null);
         }
     }
 
-    public List<Account> loadAccounts(String siteQuery) {
+    public Result<List<Account>> loadAccounts(String siteQuery) {
         List<Account> accounts = new ArrayList<>();
         String sql = "Select * from vault";
 
         try (Statement stmt = this.connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            while(rs.next()) {
+            while (rs.next()) {
                 String id = rs.getString("id");
                 String site = rs.getString("site");
                 String username = rs.getString("username");
@@ -141,18 +168,19 @@ public class Database {
 
                 Account acc = new Account(id, site, username, encryptedPass);
 
-                if(site.equals(siteQuery)) System.out.println(acc.getUsername());
+                if (site.equals(siteQuery)) System.out.println(acc.getUsername());
                 else accounts.add(acc);
             }
 
-        }  catch (SQLException e) {
+        } catch (SQLException e) {
             System.out.println("Error in loading Accounts: " + e.getMessage());
+            new Result(0, false, "Error in loading Accounts: " + e.getMessage(), null);
         }
 
-        return accounts;
+        return new Result(0, true, "Successfully fetched all accounts.", accounts);
     }
 
-    public Account getAccountByUsername(String siteQuery, String usernameQuery) {
+    public Result<Account> getAccountByUsername(String siteQuery, String usernameQuery) {
         String sql = "SELECT * FROM vault WHERE site = ? AND username = ?";
         Account account = null;
 
@@ -171,11 +199,12 @@ public class Database {
             }
         } catch (SQLException e) {
             System.out.println("Error fetching account by username: " + e.getMessage());
+            return new Result(0, false, "Error fetching account by username: " + e.getMessage(), null);
         }
-        return account;
+        return new Result(0, true, "Successfully fetched account.", account);
     }
 
-    public Account getAccount(String siteQuery) {
+    public Result<Account> getAccount(String siteQuery) {
         String checksql = "SELECT COUNT(*) FROM vault WHERE site = ?";
         try (java.sql.PreparedStatement stmt = this.connection.prepareStatement(checksql)) {
             stmt.setString(1, siteQuery);
@@ -189,6 +218,7 @@ public class Database {
             }
         } catch (SQLException e) {
             System.out.println("Error counting number of accounts: " + e.getMessage());
+            return new Result(0, false, "Error counting number of accounts: " + e.getMessage(), null);
         }
         String sql = "SELECT * FROM vault WHERE site = ?";
         Account account = null;
@@ -207,7 +237,9 @@ public class Database {
             }
         } catch (SQLException e) {
             System.out.println("Error fetching account: " + e.getMessage());
+            return new Result(0, false, "Error fetching account: " + e.getMessage(), null);
         }
-        return account;
+
+        return new Result(0, true, "Successfully fetched account", account);
     }
 }

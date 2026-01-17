@@ -42,3 +42,6 @@ build/
 passkey.db
 *.db
 *.log
+
+### ENVIRONMENT FILES ###
+.env

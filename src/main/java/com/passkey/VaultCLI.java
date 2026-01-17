@@ -40,9 +40,9 @@ public class VaultCLI {
                     break;
                 case "6":
                     System.out.println("Goodbye! Stay safe.");
-                    return; // Exits the method (and the loop)
+                    return;
                 default:
-                    System.out.println("Invalid option. Try again.");
+                    monitorMode();
             }
         }
     }
@@ -55,11 +55,21 @@ public class VaultCLI {
         System.out.println("4. Update Password");
         System.out.println("5. List All Sites");
         System.out.println("6. Exit");
+        System.out.println("Default: Monitor Mode.");
         System.out.print("Select an option: ");
     }
 
-    // --- The Logic for Each Option ---
+    private void monitorMode() {
+        System.out.println("--- MONITOR MODE ---");
+        System.out.println("(Console is now open. Background tasks will print here.)");
+        System.out.println("(Press ENTER to return to menu)");
 
+        // This line blocks the main thread.
+        // It does nothing but wait for the user to hit Enter.
+        scanner.nextLine();
+    }
+
+    // --- The Logic for Each Option ---
     private void handleSave() {
         try {
             System.out.print("Enter Site Name (e.g. facebook.com): ");
@@ -87,18 +97,17 @@ public class VaultCLI {
             System.out.print("Enter Site Name to search: ");
             siteQuery = scanner.nextLine();
 
-            Account acc = db.getAccount(siteQuery);
-            if (acc != null) {
+            Result<Account> acc = db.getAccount(siteQuery);
+            if (acc.getData() != null) {
                 // Decrypt
-                String plainPass = sec.decrypt(acc.getPassword());
+                String plainPass = sec.decrypt(acc.getData().getPassword());
 
                 // Copy
                 clip.copy(plainPass);
 
-                System.out.println("✅ Found: " + acc.getUsername());
+                System.out.println("✅ Found: " + acc.getData().getUsername());
                 System.out.println("✅ Password copied to clipboard!");
-            }
-            else {
+            } else {
                 System.out.println("❌ Account not found.");
             }
 
@@ -114,18 +123,17 @@ public class VaultCLI {
             System.out.print("Enter username to search: ");
             String usernameQuery = scanner.nextLine();
 
-            Account acc = db.getAccountByUsername(siteQuery, usernameQuery);
-            if (acc != null) {
+            Result<Account> acc = db.getAccountByUsername(siteQuery, usernameQuery);
+            if (acc.getData() != null) {
                 // Decrypt
-                String plainPass = sec.decrypt(acc.getPassword());
+                String plainPass = sec.decrypt(acc.getData().getPassword());
 
                 // Copy
                 clip.copy(plainPass);
 
-                System.out.println("✅ Found: " + acc.getUsername());
+                System.out.println("✅ Found: " + acc.getData().getUsername());
                 System.out.println("✅ Password copied to clipboard!");
-            }
-            else {
+            } else {
                 System.out.println("❌ Account not found.");
             }
 
@@ -169,12 +177,12 @@ public class VaultCLI {
     }
 
     private void handleList() {
-        List<Account> accounts = db.loadAccounts("");
-        if (accounts.isEmpty()) {
+        Result<List<Account>> accounts = db.loadAccounts("");
+        if (accounts.getData().isEmpty()) {
             System.out.println("Vault is empty.");
         } else {
             System.out.println("\n--- Stored Accounts ---");
-            for (Account acc : accounts) {
+            for (Account acc : accounts.getData()) {
                 // Only showing Site and User, keeping password hidden
                 System.out.println("• " + acc.getSite() + " (" + acc.getUsername() + ")");
             }
